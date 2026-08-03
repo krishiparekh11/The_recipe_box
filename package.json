@@ -1,0 +1,23 @@
+{
+  "name": "recipe-box",
+  "version": "1.0.0",
+  "description": "The Recipe Box - a cloud-based web app to save, organize, and rediscover recipes. CSYE 6225 project.",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "create-table": "node scripts/create-table.js",
+    "seed": "node scripts/seed.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.637.0",
+    "@aws-sdk/lib-dynamodb": "^3.637.0",
+    "express": "^4.19.2"
+  },
+  "author": "Kara Payne-Hall",
+  "license": "MIT"
+}

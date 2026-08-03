@@ -1,0 +1,15 @@
+[Unit]
+Description=The Recipe Box web application
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/recipe-box
+EnvironmentFile=/etc/recipe-box.env
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=3
+User=root
+
+[Install]
+WantedBy=multi-user.target
