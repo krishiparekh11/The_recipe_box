@@ -7,7 +7,7 @@
 set -euxo pipefail
 
 # ---- EDIT THESE TWO LINES ----
-REPO_URL="https://github.com/YOUR_USERNAME/recipe-box.git"
+REPO_URL="https://github.com/krishiparekh11/The_recipe_box.git"
 AWS_REGION="us-east-1"
 # ------------------------------
 
