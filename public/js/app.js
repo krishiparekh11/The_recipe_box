@@ -99,7 +99,19 @@ function snippet(r) {
   return r.ingredients || r.instructions || "No details yet.";
 }
 
+function renderCards() {
+  const board = $("#board");
+  const empty = $("#empty");
+  board.innerHTML = "";
 
+  if (!state.recipes.length) {
+    empty.hidden = false;
+    if (state.query) $("#empty-sub").textContent = `Nothing matches "${state.query}".`;
+    else if (state.favoritesOnly) $("#empty-sub").textContent = "No favorites yet. Tap a heart to save one.";
+    else if (state.category !== "All") $("#empty-sub").textContent = `Nothing filed under ${state.category} yet.`;
+    else $("#empty-sub").textContent = "Add your first recipe to get started.";
+    return;
+  }
   empty.hidden = true;
 
   state.recipes.forEach((r) => {
