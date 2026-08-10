@@ -326,15 +326,6 @@ body {
 .detail-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
 
 /* ---------- Empty ---------- */
-.empty {
-  text-align: center;
-  padding: 70px 20px;
-  border: 1px dashed var(--line-strong);
-  border-radius: var(--radius);
-  background: var(--surface);
-}
-.empty-title { font-family: var(--display); font-weight: 600; font-size: 21px; margin: 0 0 6px; }
-.empty-sub { font-family: var(--mono); font-size: 12.5px; color: var(--muted); margin: 0; }
 
 /* ---------- Toast (never intercepts clicks) ---------- */
 .toast {
