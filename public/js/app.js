@@ -91,7 +91,7 @@ async function loadRecipes() {
     buildFilters();
     renderCards();
   } catch (err) {
-    toast(err.message);
+    //toast(err.message);
   }
 }
 
