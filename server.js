@@ -16,7 +16,9 @@ app.use(express.json());
 // The ALB target group pings this. It must return 200 for the instance to be
 // considered healthy and kept in rotation. Keep it dependency-free (no DB call)
 // so a slow database never marks a good instance unhealthy.
-app.get("/health", (req, res) => res.status(200).json({ status: "ok" }));
+app.get("/health", (req, res) =>
+  res.status(200).json({ status: "healthy" })
+);
 
 // --- API -----------------------------------------------------------------
 app.get("/api/categories", (req, res) => res.json(CATEGORIES));
