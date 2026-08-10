@@ -8,6 +8,6 @@ router.get("/:id", c.getRecipe);             // recipe details
 router.post("/", c.createRecipe);            // add a recipe 
 router.put("/:id", c.updateRecipe);          // edit a recipe
 router.patch("/:id/favorite", c.toggleFavorite); // favorite / unfavorite
-//router.delete("/:id", c.deleteRecipe);       // delete a recipe
+router.delete("/:id", c.deleteRecipe);       // delete a recipe
 
 module.exports = router;
