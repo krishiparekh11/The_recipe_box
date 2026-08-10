@@ -7,96 +7,114 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Public+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap"
     rel="stylesheet"
   />
   <link rel="stylesheet" href="/css/styles.css" />
 </head>
 <body>
-  <header class="masthead">
-    <div class="masthead-inner">
-      <div class="wordmark">
-        <span class="wordmark-the">The</span>
-        <span class="wordmark-main">Recipe Box</span>
-        <span class="wordmark-tag">saved from the scroll, found when you cook</span>
-      </div>
-      <div class="masthead-actions">
-        <label class="search" for="search-input">
-          <svg viewBox="0 0 24 24" aria-hidden="true" class="search-icon"><path d="M21 21l-4.3-4.3M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"/></svg>
-          <input id="search-input" type="search" placeholder="Search by name" autocomplete="off" />
-        </label>
-        <button id="add-btn" class="btn btn-primary">
-          <span class="btn-plus">+</span> Add recipe
+  <!-- ============ Top bar ============ -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">◧</span>
+        <span class="brand-name">The Recipe Box</span>
+      </a>
+
+      <div class="topbar-tools">
+        <div class="search">
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="search-icon">
+            <path d="M21 21l-4.3-4.3M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16z" />
+          </svg>
+          <input
+            id="search-input"
+            type="search"
+            placeholder="Search recipes"
+            autocomplete="off"
+            aria-label="Search recipes by name"
+          />
+        </div>
+        <button id="add-btn" class="btn btn-primary" type="button">
+          <span aria-hidden="true">+</span> Add recipe
         </button>
       </div>
     </div>
   </header>
 
-  <nav class="tabs" id="tabs" aria-label="Recipe categories"></nav>
+  <main class="wrap">
+    <!-- ============ Inline add / edit form (NOT a modal) ============ -->
+    <section id="form-panel" class="form-panel" hidden aria-label="Recipe editor">
+      <div class="form-head">
+        <h2 id="form-title" class="form-title">New recipe</h2>
+        <button id="form-close" class="link-btn" type="button">Close</button>
+      </div>
 
-  <main class="board" id="board">
-    <!-- cards injected here -->
-  </main>
+      <form id="recipe-form" autocomplete="off">
+        <input type="hidden" id="f-id" />
 
-  <div class="empty" id="empty" hidden>
-    <div class="empty-card">
-      <p class="empty-title">This drawer is empty.</p>
-      <p class="empty-sub" id="empty-sub">Add your first recipe to start the box.</p>
-    </div>
-  </div>
-
-  <!-- ============ Add / Edit modal ============ -->
-  <div class="overlay" id="form-overlay" hidden>
-    <div class="modal card-paper" role="dialog" aria-modal="true" aria-labelledby="form-title">
-      <div class="card-margin"></div>
-      <div class="modal-body">
-        <div class="modal-head">
-          <h2 id="form-title" class="modal-title">New recipe</h2>
-          <button class="icon-btn" id="form-close" aria-label="Close">&times;</button>
-        </div>
-        <form id="recipe-form">
-          <input type="hidden" id="f-id" />
-          <label class="field">
+        <div class="grid-2">
+          <label class="field field-name">
             <span class="field-label">Name</span>
-            <input id="f-name" type="text" required placeholder="Marry Me Chicken" />
+            <input
+              id="f-name" type="text" required placeholder="e.g. Marry Me Chicken"
+              autocomplete="off" data-1p-ignore="true" data-lpignore="true" data-form-type="other"
+            />
           </label>
+
           <label class="field">
             <span class="field-label">Category</span>
-            <select id="f-category"></select>
+            <select id="f-category" autocomplete="off"></select>
           </label>
-          <label class="field">
-            <span class="field-label">Ingredients</span>
-            <textarea id="f-ingredients" rows="4" placeholder="One per line, or comma separated"></textarea>
-          </label>
-          <label class="field">
-            <span class="field-label">Instructions</span>
-            <textarea id="f-instructions" rows="5" placeholder="How to make it"></textarea>
-          </label>
-          <label class="field">
-            <span class="field-label">Source link <span class="field-hint">(optional)</span></span>
-            <input id="f-source" type="url" placeholder="https://instagram.com/..." />
-          </label>
-          <p class="form-error" id="form-error" hidden></p>
-          <div class="modal-foot">
-            <button type="button" class="btn btn-ghost" id="form-cancel">Cancel</button>
-            <button type="submit" class="btn btn-primary" id="form-save">Save recipe</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
+        </div>
 
-  <!-- ============ Detail modal ============ -->
-  <div class="overlay" id="detail-overlay" hidden>
-    <div class="modal card-paper" role="dialog" aria-modal="true" aria-labelledby="detail-name">
-      <div class="card-margin"></div>
-      <div class="modal-body" id="detail-body">
-        <!-- filled by JS -->
-      </div>
-    </div>
-  </div>
+        <label class="field">
+          <span class="field-label">Ingredients</span>
+          <textarea
+            id="f-ingredients" rows="4" placeholder="One per line, or comma separated"
+            autocomplete="off" data-1p-ignore="true" data-lpignore="true" data-gramm="false"
+          ></textarea>
+        </label>
 
-  <div class="toast" id="toast" hidden></div>
+        <label class="field">
+          <span class="field-label">Instructions</span>
+          <textarea
+            id="f-instructions" rows="5" placeholder="How to make it"
+            autocomplete="off" data-1p-ignore="true" data-lpignore="true" data-gramm="false"
+          ></textarea>
+        </label>
+
+        <label class="field">
+          <span class="field-label">Source link <span class="field-hint">optional</span></span>
+          <input
+            id="f-source" type="url" placeholder="https://instagram.com/..."
+            autocomplete="off" data-1p-ignore="true" data-lpignore="true" data-form-type="other"
+          />
+        </label>
+
+        <p class="form-error" id="form-error" hidden></p>
+
+        <div class="form-foot">
+          <button type="button" class="btn btn-ghost" id="form-cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="form-save">Save recipe</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- ============ Filters ============ -->
+    <nav class="filters" id="filters" aria-label="Filter recipes"></nav>
+
+    <!-- ============ Recipe grid ============ -->
+    <section class="board" id="board" aria-live="polite"><!-- cards injected --></section>
+
+    <!-- ============ Empty state ============ -->
+    <div class="empty" id="empty" hidden>
+      <p class="empty-title" id="empty-title">This box is empty.</p>
+      <p class="empty-sub" id="empty-sub">Add your first recipe to get started.</p>
+    </div>
+  </main>
+
+  <!-- Toast never blocks clicks (pointer-events: none in CSS) -->
+  <div class="toast" id="toast" role="status" hidden></div>
 
   <script src="/js/app.js"></script>
 </body>

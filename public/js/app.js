@@ -1,21 +1,22 @@
-// public/js/app.js — Recipe Box frontend logic (vanilla JS, no build step).
+// public/js/app.js — Recipe Box frontend (redesign, overlay-free).
+// Same backend API as before. The add/edit form and the recipe details render
+// inline in the page flow, so nothing can cover the screen and block clicks.
 
 const HEART_SVG =
-  '<svg viewBox="0 0 24 24" aria-hidden="true"><path class="heart" d="M12 21s-7.5-4.7-10-9.3C.4 8.5 2 5 5.3 5c2 0 3.4 1.2 4.2 2.4C10.3 6.2 11.7 5 13.7 5 17 5 18.6 8.5 17 11.7 14.5 16.3 12 21 12 21z"/></svg>';
+  '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.7-10-9.3C.4 8.5 2 5 5.3 5c2 0 3.4 1.2 4.2 2.4C10.3 6.2 11.7 5 13.7 5 17 5 18.6 8.5 17 11.7 14.5 16.3 12 21 12 21z"/></svg>';
 
 const state = {
   category: "All",
   favoritesOnly: false,
   query: "",
   categories: [],
+  recipes: [],
+  openId: null, // which card is expanded inline
 };
 
 const $ = (sel) => document.querySelector(sel);
-const board = $("#board");
-const emptyEl = $("#empty");
-const emptySub = $("#empty-sub");
 
-// ---------- API helpers ----------
+// ---------- API helper ----------
 async function api(path, options) {
   const res = await fetch(path, {
     headers: { "Content-Type": "application/json" },
@@ -23,7 +24,7 @@ async function api(path, options) {
   });
   if (res.status === 204) return null;
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || "Request failed");
+  if (!res.ok) throw new Error(data.error || "Something went wrong. Try again.");
   return data;
 }
 
@@ -37,55 +38,48 @@ function toast(msg) {
   toastTimer = setTimeout(() => (el.hidden = true), 2600);
 }
 
-// ---------- Tabs ----------
-function buildTabs() {
-  const tabsEl = $("#tabs");
-  const items = ["All", ...state.categories];
-  tabsEl.innerHTML = "";
+// ---------- Filters ----------
+function buildFilters() {
+  const wrap = $("#filters");
+  wrap.innerHTML = "";
 
-  items.forEach((cat) => {
+  const makeChip = (label, isActive, onClick, extraClass = "", html) => {
     const b = document.createElement("button");
-    b.className = "tab";
-    b.textContent = cat;
-    b.setAttribute("role", "tab");
-    b.setAttribute("aria-selected", String(!state.favoritesOnly && state.category === cat));
-    b.addEventListener("click", () => {
-      state.category = cat;
-      state.favoritesOnly = false;
-      refreshTabs();
-      loadRecipes();
-    });
-    tabsEl.appendChild(b);
-  });
+    b.type = "button";
+    b.className = "chip " + extraClass;
+    b.innerHTML = html || label;
+    b.setAttribute("aria-pressed", String(isActive));
+    b.addEventListener("click", onClick);
+    wrap.appendChild(b);
+  };
 
-  // Favorites tab (uses the jam accent).
-  const fav = document.createElement("button");
-  fav.className = "tab tab-fav";
-  fav.textContent = "\u2665 Favorites";
-  fav.setAttribute("role", "tab");
-  fav.setAttribute("aria-selected", String(state.favoritesOnly));
-  fav.addEventListener("click", () => {
-    state.favoritesOnly = true;
-    refreshTabs();
+  makeChip("All", !state.favoritesOnly && state.category === "All", () => {
+    state.category = "All";
+    state.favoritesOnly = false;
     loadRecipes();
   });
-  tabsEl.appendChild(fav);
-}
 
-function refreshTabs() {
-  document.querySelectorAll(".tab").forEach((t) => {
-    if (t.classList.contains("tab-fav")) {
-      t.setAttribute("aria-selected", String(state.favoritesOnly));
-    } else {
-      t.setAttribute(
-        "aria-selected",
-        String(!state.favoritesOnly && state.category === t.textContent)
-      );
-    }
+  state.categories.forEach((cat) => {
+    makeChip(cat, !state.favoritesOnly && state.category === cat, () => {
+      state.category = cat;
+      state.favoritesOnly = false;
+      loadRecipes();
+    });
   });
+
+  makeChip(
+    "Favorites",
+    state.favoritesOnly,
+    () => {
+      state.favoritesOnly = true;
+      loadRecipes();
+    },
+    "chip-fav",
+    '<span class="h" aria-hidden="true">\u2665</span> Favorites'
+  );
 }
 
-// ---------- Load + render recipes ----------
+// ---------- Load + render ----------
 async function loadRecipes() {
   const params = new URLSearchParams();
   if (!state.favoritesOnly && state.category !== "All") params.set("category", state.category);
@@ -93,141 +87,123 @@ async function loadRecipes() {
   if (state.query) params.set("q", state.query);
 
   try {
-    const recipes = await api(`/api/recipes?${params.toString()}`);
-    renderCards(recipes);
+    state.recipes = await api(`/api/recipes?${params.toString()}`);
+    buildFilters();
+    renderCards();
   } catch (err) {
     toast(err.message);
   }
 }
 
-function snippet(recipe) {
-  return recipe.ingredients || recipe.instructions || "No details yet.";
+function snippet(r) {
+  return r.ingredients || r.instructions || "No details yet.";
 }
 
-function renderCards(recipes) {
+function renderCards() {
+  const board = $("#board");
+  const empty = $("#empty");
   board.innerHTML = "";
 
-  if (!recipes.length) {
-    emptyEl.hidden = false;
-    if (state.query) emptySub.textContent = `No recipes match "${state.query}".`;
-    else if (state.favoritesOnly) emptySub.textContent = "No favorites yet. Tap the heart on a recipe.";
-    else if (state.category !== "All") emptySub.textContent = `Nothing filed under ${state.category} yet.`;
-    else emptySub.textContent = "Add your first recipe to start the box.";
+  if (!state.recipes.length) {
+    empty.hidden = false;
+    if (state.query) $("#empty-sub").textContent = `Nothing matches "${state.query}".`;
+    else if (state.favoritesOnly) $("#empty-sub").textContent = "No favorites yet. Tap a heart to save one.";
+    else if (state.category !== "All") $("#empty-sub").textContent = `Nothing filed under ${state.category} yet.`;
+    else $("#empty-sub").textContent = "Add your first recipe to get started.";
     return;
   }
-  emptyEl.hidden = true;
+  empty.hidden = true;
 
-  recipes.forEach((r) => {
+  state.recipes.forEach((r) => {
+    const isOpen = state.openId === r.recipeId;
     const card = document.createElement("article");
-    card.className = "recipe-card";
-    card.tabIndex = 0;
+    card.className = "card" + (isOpen ? " is-open" : "");
 
     card.innerHTML = `
-      <button class="fav-btn ${r.favorite ? "is-fav" : ""}" aria-label="Toggle favorite">${HEART_SVG}</button>
-      <div class="card-category">${escapeHtml(r.category)}</div>
-      <h3 class="card-title">${escapeHtml(r.name)}</h3>
-      <p class="card-snippet">${escapeHtml(snippet(r))}</p>
-      <div class="card-foot">
-        <span class="card-source">${r.sourceUrl ? "\u2197 saved link" : "\u00b7"}</span>
+      <div class="card-top" data-role="toggle">
+        <div class="card-main">
+          <div class="card-eyebrow">${escapeHtml(r.category)}</div>
+          <h3 class="card-title">${escapeHtml(r.name)}</h3>
+          <p class="card-snippet">${escapeHtml(snippet(r))}</p>
+        </div>
+        <button class="heart-btn ${r.favorite ? "is-fav" : ""}" data-role="fav"
+                type="button" aria-label="${r.favorite ? "Remove favorite" : "Add favorite"}">
+          ${HEART_SVG}
+        </button>
       </div>
+      <div class="card-tag">${r.sourceUrl ? "\u2197 saved link" : "\u00b7"}</div>
+      ${isOpen ? detailHtml(r) : ""}
     `;
 
-    // Open details on card click (but not when the heart is clicked).
-    card.addEventListener("click", () => openDetail(r.recipeId));
-    card.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") openDetail(r.recipeId);
+    // Expand / collapse on the top area (but not when the heart is clicked).
+    card.querySelector('[data-role="toggle"]').addEventListener("click", () => {
+      state.openId = isOpen ? null : r.recipeId;
+      renderCards();
     });
 
-    const favBtn = card.querySelector(".fav-btn");
-    favBtn.addEventListener("click", async (e) => {
+    // Favorite toggle.
+    card.querySelector('[data-role="fav"]').addEventListener("click", async (e) => {
       e.stopPropagation();
       try {
         const updated = await api(`/api/recipes/${r.recipeId}/favorite`, { method: "PATCH" });
-        favBtn.classList.toggle("is-fav", updated.favorite);
         r.favorite = updated.favorite;
-        if (state.favoritesOnly && !updated.favorite) loadRecipes();
+        if (state.favoritesOnly && !updated.favorite) {
+          state.recipes = state.recipes.filter((x) => x.recipeId !== r.recipeId);
+        }
+        renderCards();
       } catch (err) {
         toast(err.message);
       }
     });
+
+    // Wire up expanded-detail action buttons.
+    if (isOpen) {
+      card.querySelector('[data-role="edit"]').addEventListener("click", () => openForm(r));
+      card.querySelector('[data-role="delete"]').addEventListener("click", async () => {
+        if (!confirm(`Delete "${r.name}"? This can't be undone.`)) return;
+        try {
+          await api(`/api/recipes/${r.recipeId}`, { method: "DELETE" });
+          state.openId = null;
+          toast("Recipe deleted.");
+          loadRecipes();
+        } catch (err) {
+          toast(err.message);
+        }
+      });
+    }
 
     board.appendChild(card);
   });
 }
 
-// ---------- Detail modal ----------
-async function openDetail(id) {
-  try {
-    const r = await api(`/api/recipes/${id}`);
-    const body = $("#detail-body");
-
-    const ingredientsHtml = r.ingredients
-      ? `<div class="detail-section"><h3>Ingredients</h3><p>${escapeHtml(r.ingredients)}</p></div>`
-      : "";
-    const instructionsHtml = r.instructions
-      ? `<div class="detail-section"><h3>Instructions</h3><p>${escapeHtml(r.instructions)}</p></div>`
-      : "";
-    const sourceHtml = r.sourceUrl
-      ? `<div class="detail-section detail-source"><h3>Source</h3><a href="${escapeAttr(r.sourceUrl)}" target="_blank" rel="noopener">${escapeHtml(r.sourceUrl)}</a></div>`
-      : "";
-    const when = r.createdAt ? new Date(r.createdAt).toLocaleDateString() : "";
-
-    body.innerHTML = `
-      <div class="modal-head">
-        <div>
-          <div class="detail-category">${escapeHtml(r.category)}</div>
-          <h2 id="detail-name" class="detail-title">${escapeHtml(r.name)}</h2>
-        </div>
-        <button class="icon-btn" id="detail-close" aria-label="Close">&times;</button>
-      </div>
-      <div class="detail-meta">${when ? "Saved " + when : ""}</div>
-      ${ingredientsHtml}
-      ${instructionsHtml}
-      ${sourceHtml}
+function detailHtml(r) {
+  const when = r.createdAt ? new Date(r.createdAt).toLocaleDateString() : "";
+  const ing = r.ingredients
+    ? `<div class="detail-section"><h4>Ingredients</h4><p>${escapeHtml(r.ingredients)}</p></div>`
+    : "";
+  const ins = r.instructions
+    ? `<div class="detail-section"><h4>Instructions</h4><p>${escapeHtml(r.instructions)}</p></div>`
+    : "";
+  const src = r.sourceUrl
+    ? `<div class="detail-section detail-source"><h4>Source</h4><a href="${escapeAttr(r.sourceUrl)}" target="_blank" rel="noopener">${escapeHtml(r.sourceUrl)}</a></div>`
+    : "";
+  return `
+    <div class="detail">
+      ${when ? `<div class="detail-meta">Saved ${escapeHtml(when)}</div>` : ""}
+      ${ing}${ins}${src}
       <div class="detail-actions">
-        <button class="detail-fav ${r.favorite ? "is-fav" : ""}" id="detail-fav">${HEART_SVG}<span>${r.favorite ? "Favorited" : "Favorite"}</span></button>
-        <button class="btn btn-ghost" id="detail-edit">Edit</button>
-        <button class="btn btn-danger" id="detail-delete">Delete</button>
+        <button class="btn btn-ghost" type="button" data-role="edit">Edit</button>
+        <button class="btn btn-danger" type="button" data-role="delete">Delete</button>
       </div>
-    `;
-
-    show("#detail-overlay");
-
-    $("#detail-close").addEventListener("click", () => hide("#detail-overlay"));
-    $("#detail-fav").addEventListener("click", async () => {
-      try {
-        const updated = await api(`/api/recipes/${id}/favorite`, { method: "PATCH" });
-        const btn = $("#detail-fav");
-        btn.classList.toggle("is-fav", updated.favorite);
-        btn.querySelector("span").textContent = updated.favorite ? "Favorited" : "Favorite";
-        loadRecipes();
-      } catch (err) {
-        toast(err.message);
-      }
-    });
-    $("#detail-edit").addEventListener("click", () => {
-      hide("#detail-overlay");
-      openForm(r);
-    });
-    $("#detail-delete").addEventListener("click", async () => {
-      if (!confirm(`Delete "${r.name}"? This can't be undone.`)) return;
-      try {
-        await api(`/api/recipes/${id}`, { method: "DELETE" });
-        hide("#detail-overlay");
-        toast("Recipe deleted.");
-        loadRecipes();
-      } catch (err) {
-        toast(err.message);
-      }
-    });
-  } catch (err) {
-    toast(err.message);
-  }
+    </div>
+  `;
 }
 
-// ---------- Add / Edit form ----------
+// ---------- Inline add / edit form ----------
 function openForm(recipe) {
   const editing = Boolean(recipe && recipe.recipeId);
+  const panel = $("#form-panel");
+
   $("#form-title").textContent = editing ? "Edit recipe" : "New recipe";
   $("#form-save").textContent = editing ? "Save changes" : "Save recipe";
   $("#form-error").hidden = true;
@@ -238,7 +214,6 @@ function openForm(recipe) {
   $("#f-instructions").value = editing ? recipe.instructions : "";
   $("#f-source").value = editing ? recipe.sourceUrl : "";
 
-  // Populate category select.
   const sel = $("#f-category");
   sel.innerHTML = "";
   state.categories.forEach((cat) => {
@@ -249,8 +224,13 @@ function openForm(recipe) {
     sel.appendChild(opt);
   });
 
-  show("#form-overlay");
+  panel.hidden = false;
+  panel.scrollIntoView({ behavior: "smooth", block: "start" });
   $("#f-name").focus();
+}
+
+function closeForm() {
+  $("#form-panel").hidden = true;
 }
 
 async function submitForm(e) {
@@ -266,7 +246,7 @@ async function submitForm(e) {
 
   if (!payload.name) {
     const err = $("#form-error");
-    err.textContent = "Please give the recipe a name.";
+    err.textContent = "Give the recipe a name to save it.";
     err.hidden = false;
     return;
   }
@@ -274,12 +254,13 @@ async function submitForm(e) {
   try {
     if (id) {
       await api(`/api/recipes/${id}`, { method: "PUT", body: JSON.stringify(payload) });
-      toast("Recipe updated.");
+      toast("Changes saved.");
     } else {
       await api("/api/recipes", { method: "POST", body: JSON.stringify(payload) });
-      toast("Recipe added to the box.");
+      toast("Recipe added.");
     }
-    hide("#form-overlay");
+    closeForm();
+    state.openId = null;
     loadRecipes();
   } catch (err) {
     const el = $("#form-error");
@@ -287,10 +268,6 @@ async function submitForm(e) {
     el.hidden = false;
   }
 }
-
-// ---------- Overlay helpers ----------
-function show(sel) { $(sel).hidden = false; }
-function hide(sel) { $(sel).hidden = true; }
 
 // ---------- Escaping ----------
 function escapeHtml(s) {
@@ -309,19 +286,23 @@ function debounce(fn, ms) {
   };
 }
 
-// ---------- Wire up ----------
+// ---------- Init ----------
 async function init() {
+  // The form starts closed; there is no overlay anywhere in this app.
+  closeForm();
+
   try {
     state.categories = await api("/api/categories");
   } catch {
     state.categories = ["Breakfast", "Lunch", "Dinner", "Dessert", "Meal Prep", "Snack", "Drink", "Other"];
   }
-  buildTabs();
+
+  buildFilters();
   loadRecipes();
 
   $("#add-btn").addEventListener("click", () => openForm(null));
-  $("#form-close").addEventListener("click", () => hide("#form-overlay"));
-  $("#form-cancel").addEventListener("click", () => hide("#form-overlay"));
+  $("#form-close").addEventListener("click", closeForm);
+  $("#form-cancel").addEventListener("click", closeForm);
   $("#recipe-form").addEventListener("submit", submitForm);
 
   $("#search-input").addEventListener(
@@ -332,16 +313,10 @@ async function init() {
     }, 220)
   );
 
-  // Close modals on overlay backdrop click or Escape.
-  document.querySelectorAll(".overlay").forEach((ov) => {
-    ov.addEventListener("click", (e) => {
-      if (e.target === ov) ov.hidden = true;
-    });
-  });
+  // Escape closes the inline form (never needed to "unstick" the page,
+  // since nothing overlays it — but it's a nice convenience).
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      document.querySelectorAll(".overlay").forEach((ov) => (ov.hidden = true));
-    }
+    if (e.key === "Escape") closeForm();
   });
 }
 
