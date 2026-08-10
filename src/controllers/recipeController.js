@@ -19,6 +19,7 @@ const CATEGORIES = [
   "Meal Prep",
   "Snack",
   "Drink",
+  "Cocktails"
   "Other",
 ];
 
