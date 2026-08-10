@@ -61,7 +61,7 @@ async function listRecipes(req, res, next) {
       recipes = recipes.filter((r) => r.name.toLowerCase().includes(needle));
     }
 
-    // Newest first.
+    // Sort recipes from newest to oldest.
     recipes.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
 
     res.json(recipes);
@@ -79,10 +79,12 @@ async function getRecipe(req, res, next) {
         Key: { recipeId: req.params.id },
       })
     );
+
     if (!Item) return res.status(404).json({ error: "Recipe not found" });
+
     res.json(normalize(Item));
-  } catch (err) {
-    next(err);
+  } catch (error) {
+    next(error);
   }
 }
 
@@ -161,15 +163,17 @@ async function toggleFavorite(req, res, next) {
         Key: { recipeId: req.params.id },
       })
     );
+
     if (!Item) return res.status(404).json({ error: "Recipe not found" });
 
-    const nextFav = !Boolean(Item.favorite);
+    const nextFavorite = !Boolean(Item.favorite);
+
     const { Attributes } = await ddbDoc.send(
       new UpdateCommand({
         TableName: TABLE_NAME,
         Key: { recipeId: req.params.id },
         UpdateExpression: "SET favorite = :f",
-        ExpressionAttributeValues: { ":f": nextFav },
+        ExpressionAttributeValues: { ":f": nextFavorite },
         ReturnValues: "ALL_NEW",
       })
     );
