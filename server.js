@@ -28,7 +28,7 @@ app.use(express.static(path.join(__dirname, "public")));
 // --- Error handler -------------------------------------------------------
 app.use((err, req, res, next) => {
   console.error(err);
-  res.status(500).json({ error: "Something went wrong on the server." });
+  res.status(500).json({ error: "Oops! Something went wrong on the server." });
 });
 
 app.listen(PORT, () => {
