@@ -44,13 +44,15 @@ function buildFilters() {
   wrap.innerHTML = "";
 
   const makeChip = (label, isActive, onClick, extraClass = "", html) => {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.className = "chip " + extraClass;
-    b.innerHTML = html || label;
-    b.setAttribute("aria-pressed", String(isActive));
-    b.addEventListener("click", onClick);
-    wrap.appendChild(b);
+    const button = document.createElement("button");
+
+    button.type = "button";
+    button.className = "chip " + extraClass;
+    button.innerHTML = html || label;
+    button.setAttribute("aria-pressed", String(isActive));
+    button.addEventListener("click", onClick);
+
+    wrap.appendChild(button);
   };
 
   makeChip("All", !state.favoritesOnly && state.category === "All", () => {
@@ -112,6 +114,7 @@ function renderCards() {
     else $("#empty-sub").textContent = "Add your first recipe to get started.";
     return;
   }
+
   empty.hidden = true;
 
   state.recipes.forEach((r) => {
@@ -135,7 +138,7 @@ function renderCards() {
       ${isOpen ? detailHtml(r) : ""}
     `;
 
-    // Expand / collapse on the top area (but not when the heart is clicked).
+    // Open or close the recipe card when its top section is clicked.
     card.querySelector('[data-role="toggle"]').addEventListener("click", () => {
       state.openId = isOpen ? null : r.recipeId;
       renderCards();
@@ -147,9 +150,11 @@ function renderCards() {
       try {
         const updated = await api(`/api/recipes/${r.recipeId}/favorite`, { method: "PATCH" });
         r.favorite = updated.favorite;
+
         if (state.favoritesOnly && !updated.favorite) {
           state.recipes = state.recipes.filter((x) => x.recipeId !== r.recipeId);
         }
+
         renderCards();
       } catch (err) {
         toast(err.message);
@@ -159,8 +164,10 @@ function renderCards() {
     // Wire up expanded-detail action buttons.
     if (isOpen) {
       card.querySelector('[data-role="edit"]').addEventListener("click", () => openForm(r));
+
       card.querySelector('[data-role="delete"]').addEventListener("click", async () => {
         if (!confirm(`Delete "${r.name}"? This can't be undone.`)) return;
+
         try {
           await api(`/api/recipes/${r.recipeId}`, { method: "DELETE" });
           state.openId = null;
