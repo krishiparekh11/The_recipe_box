@@ -302,7 +302,13 @@ async function init() {
 
   $("#add-btn").addEventListener("click", () => openForm(null));
   $("#form-close").addEventListener("click", closeForm);
-  
+  $("#form-cancel").addEventListener("click", closeForm);
+  $("#recipe-form").addEventListener("submit", submitForm);
+
+  $("#search-input").addEventListener(
+    "input",
+    debounce((e) => {
+      state.query = e.target.value.trim();
       loadRecipes();
     }, 220)
   );
