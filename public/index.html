@@ -103,7 +103,16 @@
     <!-- ============ Filters ============ -->
     <nav class="filters" id="filters" aria-label="Filter recipes"></nav>
 
-    
+    <!-- ============ Recipe grid ============ -->
+    <section class="board" id="board" aria-live="polite"><!-- cards injected --></section>
+
+    <!-- ============ Empty state ============ -->
+    <div class="empty" id="empty" hidden>
+      <p class="empty-title" id="empty-title">This box is empty.</p>
+      <p class="empty-sub" id="empty-sub">Add your first recipe to get started.</p>
+    </div>
+  </main>
+
   <!-- Toast never blocks clicks (pointer-events: none in CSS) -->
   <div class="toast" id="toast" role="status" hidden></div>
 
