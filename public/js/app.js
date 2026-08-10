@@ -95,7 +95,9 @@ async function loadRecipes() {
   }
 }
 
-
+function snippet(r) {
+  return r.ingredients || r.instructions || "No details yet.";
+}
 
 function renderCards() {
   const board = $("#board");
