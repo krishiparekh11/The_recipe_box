@@ -14,7 +14,34 @@
 </head>
 <body>
   <!-- ============ Top bar ============ -->
-  
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">◧</span>
+        <span class="brand-name">The Recipe Box</span>
+      </a>
+
+      <div class="topbar-tools">
+        <div class="search">
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="search-icon">
+            <path d="M21 21l-4.3-4.3M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16z" />
+          </svg>
+          <input
+            id="search-input"
+            type="search"
+            placeholder="Search recipes"
+            autocomplete="off"
+            aria-label="Search recipes by name"
+          />
+        </div>
+        <button id="add-btn" class="btn btn-primary" type="button">
+          <span aria-hidden="true">+</span> Add recipe
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
     <!-- ============ Inline add / edit form (NOT a modal) ============ -->
     <section id="form-panel" class="form-panel" hidden aria-label="Recipe editor">
       <div class="form-head">
